@@ -1,14 +1,16 @@
 import gradio as gr
 
-characters = {
-    "盾": ["茜特菈莉", "伊涅芙", "钟离", "莱依拉", "绮良良", "托马", "蓝砚"],
-    "后台/副C": ["玛薇卡", "杜林", "迪希雅", "香菱", "仆人", "夜兰", "哥伦比娅", "那维莱特", 
-                "纳西妲", "艾梅莉埃", "丝柯克", "芙宁娜", "爱诺", "夏洛蒂", "菈乌玛", "白术", 
-                "珊瑚宫心海", "芭芭拉", "希格雯", "爱可菲", "菲谢尔", "欧洛伦", "雷电将军", 
-                "久岐忍", "瓦雷莎"],
-    "减抗": ["希诺宁", "枫原万叶", "砂糖", "琴"],
-    "爆发/主C": ["玛薇卡", "那维莱特", "丝柯克", "迪希雅", "娜维娅", "芙宁娜", "仆人", "瓦雷莎"]
-}
+# 所有角色列表（合并所有类型）
+all_characters = [
+    "茜特菈莉", "伊涅芙", "钟离", "莱依拉", "绮良良", "托马", "蓝砚",
+    "玛薇卡", "杜林", "迪希雅", "香菱", "仆人", "夜兰", "哥伦比娅", "那维莱特", 
+    "纳西妲", "艾梅莉埃", "丝柯克", "芙宁娜", "爱诺", "夏洛蒂", "菈乌玛", "白术", 
+    "珊瑚宫心海", "芭芭拉", "希格雯", "爱可菲", "菲谢尔", "欧洛伦", "雷电将军", 
+    "久岐忍", "瓦雷莎", "希诺宁", "枫原万叶", "砂糖", "琴", "娜维娅"
+]
+
+# 按拼音排序，方便查找
+all_characters.sort()
 
 skill_sequences = {
     "茜特菈莉": "e,attack(0.2),keypress(q),wait(0.2),keypress(q),attack(0.2),keypress(q),attack(0.2),keypress(e)",
@@ -50,9 +52,13 @@ skill_sequences = {
     "娜维娅": "keypress(q),attack(0.1),keypress(q),attack(0.1),keypress(q),attack(0.1),keypress(q),keydown(E),wait(0.8),keyup(E),attack(1.6),keydown(E),wait(0.8),keyup(E),attack(0.1),keydown(S),attack(0.33),keyup(S),keydown(W),attack(0.3),keyup(W),keydown(S),attack(0.3),keyup(S),keydown(W),attack(0.3),keyup(W),keydown(S),attack(0.3),keyup(S),keydown(W),attack(0.3),keyup(W),attack(0.2)"
 }
 
-def build_team(shield, subc1, subc2, buffer):
-    team = [shield, subc1, subc2, buffer]
+def build_team(role1, role2, role3, role4):
+    team = [role1, role2, role3, role4]
     team = [c for c in team if c]
+    
+    # 检查重复角色
+    if len(team) != len(set(team)):
+        return "⚠️ 错误：队伍中存在重复角色！请选择不同的角色。"
     
     output_lines = []
     for char in team:
@@ -61,39 +67,40 @@ def build_team(shield, subc1, subc2, buffer):
     
     output_text = "\n".join(output_lines)
     
-    filename_chars = [c[0] for c in team if c]
-    filename = "".join(filename_chars) + ".txt"
-    
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(output_text)
+    if output_text:
+        filename_chars = [c[0] for c in team if c]
+        filename = "".join(filename_chars) + ".txt"
+        
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(output_text)
     
     return output_text
 
-with gr.Blocks(title="原神万能配队工具 - BGI策略") as demo:
-    gr.Markdown("# 🎮 原神万能配队工具")
+with gr.Blocks(title="原神配队工具 - BGI策略") as demo:
+    gr.Markdown("# 🎮 原神配队工具")
     gr.Markdown("基于BGI战斗配队逻辑：盾【刚需】+ 副C + 副C + 减抗/聚怪")
     
     with gr.Row():
-        with gr.Column():
-            shield_char = gr.Dropdown(characters["盾"], label="🛡️ 盾角色（刚需）", value="钟离")
-            subc1_char = gr.Dropdown(characters["后台/副C"], label="⚔️ 副C/后台1", value="纳西妲")
-            subc2_char = gr.Dropdown(characters["后台/副C"], label="⚔️ 副C/后台2", value="夜兰")
-            buffer_char = gr.Dropdown(characters["减抗"], label="🍃 减抗/聚怪", value="枫原万叶")
+        with gr.Column(scale=1):
+            role1 = gr.Dropdown(all_characters, label="角色1", value="钟离")
+            role2 = gr.Dropdown(all_characters, label="角色2", value="纳西妲")
+            role3 = gr.Dropdown(all_characters, label="角色3", value="夜兰")
+            role4 = gr.Dropdown(all_characters, label="角色4", value="枫原万叶")
             
-            generate_btn = gr.Button("生成配队方案", variant="primary")
+            generate_btn = gr.Button("生成配队方案", variant="primary", size="lg")
         
-        with gr.Column():
-            output = gr.Textbox(label="配队方案", lines=25)
+        with gr.Column(scale=1):
+            output = gr.Textbox(label="配队方案", lines=25, placeholder="选择角色后点击生成配队方案...")
     
     generate_btn.click(
         build_team,
-        inputs=[shield_char, subc1_char, subc2_char, buffer_char],
+        inputs=[role1, role2, role3, role4],
         outputs=output
     )
     
-    with gr.Accordion("战斗配置建议"):
+    with gr.Accordion("配置建议", open=False):
         gr.Markdown("""
-        **核心设置：**
+        **战斗设置：**
         - 战斗配置：开启
         - 自动检测战斗结束：开启
         - 更快检查结束战斗：开启（参数1）
